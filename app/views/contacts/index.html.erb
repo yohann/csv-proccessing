@@ -1,0 +1,28 @@
+<p style="color: green"><%= notice %></p>
+
+<h1>Contacts</h1>
+
+<div id="contacts">
+  <table style="width:100%">
+    <tr>
+      <th>Company</th>
+      <th>Contact</th>
+      <th>Country</th>
+    </tr>
+    <% @contacts.each do |contact| %>
+      <tr>
+        <td><%= contact.name %></td>
+        <td><%= contact.email %></td>
+        <td><%= contact.birth_date %></td>
+        <td><%= contact.phone %></td>
+        <td><%= contact.address %></td>
+        <td><%= contact.credit_card %></td>
+        <td><%= contact.franchise %></td>
+      </tr>
+    <% end %>
+  </table>
+</div>
+
+<%= will_paginate @posts %>
+
+<%= link_to "Import Contacts", new_contact_path %>
