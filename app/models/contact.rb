@@ -1,3 +1,5 @@
+require "csv"
+
 class Contact < ApplicationRecord
   attr_accessor :invalid_iso_birth_date
   attr_accessor :invalid_credit_card
@@ -20,7 +22,25 @@ class Contact < ApplicationRecord
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, uniqueness: { scope: :user_id }
   
   validates_presence_of :name, :email, :birth_date, :phone, :address, :credit_card, :franchise
-  
+
+  def self.import(file, column_names, user)
+    column_names = column_names.delete_if { |key, value| value.empty? }
+    CSV.foreach(file, encoding: 'iso-8859-1:utf-8', headers: true) do |row|
+      data = {
+        name: row[column_names[:name] || "name"],
+        email: row[column_names[:email] || "email"],
+        birth_date: row[column_names[:birth_date] || "birth_date"],
+        phone: row[column_names[:phone] || "phone"],
+        address: row[column_names[:address] || "address"],
+        credit_card: row[column_names[:credit_card] || "credit_card"],
+        user_id: user.id
+      } 
+      contact = Contact.new(data)
+      unless contact.save
+        ErrorLog.create data: data, message: contact.errors.full_messages.join(", ")
+      end
+    end
+  end
 
   def birth_date=(value)
     begin
@@ -35,7 +55,7 @@ class Contact < ApplicationRecord
     detector = CreditCardValidations::Detector.new(number)
     self.franchise = detector.brand.to_s
     @invalid_credit_card = true unless self.franchise && detector.valid?(self.franchise)
-    number = "*" * (number.size - 4) + number[-4, 4] if number.size > 4
+    number = "*" * (number.size - 4) + number[-4, 4] if number && number.size > 4
     super(number)
   end
   
